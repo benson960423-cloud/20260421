@@ -37,7 +37,35 @@ function draw() {
   push();
   translate(x + videoW, y); // 將原點移至影像顯示區域的右側
   scale(-1, 1);            // 水平翻轉座標軸
-  image(capture, 0, 0, videoW, videoH);
+  
+  // 實作馬賽克與黑白化處理
+  capture.loadPixels();
+  let stepSize = 20; // 設定單位大小為 20x20
+  
+  if (capture.pixels.length > 0) {
+    noStroke();
+    for (let vY = 0; vY < capture.height; vY += stepSize) {
+      for (let vX = 0; vX < capture.width; vX += stepSize) {
+        // 取得該單位的像素索引 (RGBA)
+        let index = (vX + vY * capture.width) * 4;
+        let r = capture.pixels[index];
+        let g = capture.pixels[index + 1];
+        let b = capture.pixels[index + 2];
+        
+        // 計算平均值取得黑白顏色值 (R+G+B)/3
+        let avg = (r + g + b) / 3;
+        fill(avg);
+        
+        // 將攝影機座標映射到畫布顯示區域的寬高 (60%)
+        let drawX = map(vX, 0, capture.width, 0, videoW);
+        let drawY = map(vY, 0, capture.height, 0, videoH);
+        let drawW = map(stepSize, 0, capture.width, 0, videoW);
+        let drawH = map(stepSize, 0, capture.height, 0, videoH);
+        
+        rect(drawX, drawY, drawW, drawH);
+      }
+    }
+  }
   pop();
 
   // 在 graphics 緩衝區上進行繪製
