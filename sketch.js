@@ -1,5 +1,6 @@
 let capture;
 let pg;
+let bubbles = [];
 
 function setup() {
   // 建立全螢幕畫布
@@ -13,6 +14,11 @@ function setup() {
 
   // 產生一個與視訊畫面比例相同的繪圖緩衝區 (Graphics 物件)
   pg = createGraphics(windowWidth * 0.6, windowHeight * 0.6);
+
+  // 初始化泡泡
+  for (let i = 0; i < 30; i++) {
+    bubbles.push(new Bubble(pg.width, pg.height));
+  }
 }
 
 function draw() {
@@ -35,10 +41,11 @@ function draw() {
   pop();
 
   // 在 graphics 緩衝區上進行繪製
-  pg.clear(); // 清除上一幀內容，保持背景透明
-  pg.fill(255, 255, 0, 150); // 設定半透明黃色
-  pg.noStroke();
-  pg.ellipse(pg.width / 2, pg.height / 2, 50, 50); // 在圖層中間畫一個圓
+  pg.clear();
+  for (let b of bubbles) {
+    b.update(pg.width, pg.height);
+    b.show(pg);
+  }
 
   // 將 graphics 內容顯示在視訊畫面的上方 (座標與影像對齊)
   image(pg, x, y);
@@ -49,4 +56,41 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   // 同步調整 graphics 的大小，使其維持在 60%
   pg.resizeCanvas(windowWidth * 0.6, windowHeight * 0.6);
+}
+
+class Bubble {
+  constructor(w, h) {
+    this.w = w;
+    this.h = h;
+    this.reset(true); // 初始啟動時隨機分佈高度
+  }
+
+  reset(initial = false) {
+    this.x = random(this.w);
+    this.y = initial ? random(this.h) : this.h + random(20, 100);
+    this.r = random(5, 15); // 泡泡半徑
+    this.speed = random(1, 3); // 往上漂浮的速度
+    this.noiseOffset = random(1000); // 用於左右晃動的隨機偏移
+  }
+
+  update(currentW, currentH) {
+    this.w = currentW;
+    this.h = currentH;
+    this.y -= this.speed; // 向上移動
+    this.x += sin(frameCount * 0.02 + this.noiseOffset) * 0.5; // 輕微晃動
+
+    // 如果泡泡超出頂端，重新從底部產生
+    if (this.y < -this.r) {
+      this.reset(false);
+    }
+  }
+
+  show(canvas) {
+    canvas.noStroke();
+    canvas.fill(255, 255, 255, 150); // 半透明白色
+    canvas.circle(this.x, this.y, this.r * 2);
+    // 加一個小高光讓它看起來更像泡泡
+    canvas.fill(255, 255, 255, 200);
+    canvas.circle(this.x - this.r * 0.3, this.y - this.r * 0.3, this.r * 0.6);
+  }
 }
