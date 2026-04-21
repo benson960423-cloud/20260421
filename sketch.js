@@ -23,8 +23,12 @@ function draw() {
   let x = (width - videoW) / 2;
   let y = (height - videoH) / 2;
 
-  // 在畫布中間繪製攝影機影像
-  image(capture, x, y, videoW, videoH);
+  // 修正左右顛倒問題：使用鏡射處理
+  push();
+  translate(x + videoW, y); // 將原點移至影像顯示區域的右側
+  scale(-1, 1);            // 水平翻轉座標軸
+  image(capture, 0, 0, videoW, videoH);
+  pop();
 }
 
 // 當視窗大小改變時，自動調整畫布大小以維持全螢幕
